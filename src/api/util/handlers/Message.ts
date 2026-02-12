@@ -1,19 +1,19 @@
 /*
-	Spacebar: A FOSS re-implementation and extension of the Discord.com backend.
-	Copyright (C) 2023 Spacebar and Spacebar Contributors
+    Spacebar: A FOSS re-implementation and extension of the Discord.com backend.
+    Copyright (C) 2023 Spacebar and Spacebar Contributors
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU Affero General Public License as published
-	by the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU Affero General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-	You should have received a copy of the GNU Affero General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import { EmbedHandlers } from "@spacebar/api";
@@ -281,7 +281,7 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
                 }
             }
             /** Q: should be checked if the referenced message exists? ANSWER: NO
-			 otherwise backfilling won't work **/
+             otherwise backfilling won't work **/
             if (MessageType.THREAD_STARTER_MESSAGE !== message.type && MessageType.THREAD_CREATED !== message.type) message.type = MessageType.REPLY;
         }
     }
@@ -316,9 +316,9 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
         content = content.replace(/ *`[^)]*` */g, ""); // remove codeblocks
         // root@Rory - 20/02/2023 - This breaks channel mentions in test client. We're not sure this was used in older clients.
         /*for (const [, mention] of content.matchAll(CHANNEL_MENTION)) {
-			if (!mention_channel_ids.includes(mention))
-				mention_channel_ids.push(mention);
-		}*/
+            if (!mention_channel_ids.includes(mention))
+                mention_channel_ids.push(mention);
+        }*/
 
         for (const [, mention] of content.matchAll(USER_MENTION)) {
             if (!mention_user_ids.includes(mention)) mention_user_ids.push(mention);
@@ -348,10 +348,13 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
             },
         });
         if (referencedMessage && referencedMessage.author_id !== message.author_id) {
-            message.mentions.push(
-                // @ts-expect-error it does not like the .toPublicUser() lol
-                (await User.findOne({ where: { id: referencedMessage.author_id } }))!.toPublicUser(),
-            );
+            const allowed_mentions = opts.allowed_mentions;
+            if (allowed_mentions?.replied_user !== false) {
+                message.mentions.push(
+                    // @ts-expect-error it does not like the .toPublicUser() lol
+                    (await User.findOne({ where: { id: referencedMessage.author_id } }))!.toPublicUser(),
+                );
+            }
         }
 
         // FORWARD
@@ -386,8 +389,8 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
 
     // root@Rory - 20/02/2023 - This breaks channel mentions in test client. We're not sure this was used in older clients.
     /*message.mention_channels = mention_channel_ids.map((x) =>
-		Channel.create({ id: x }),
-	);*/
+        Channel.create({ id: x }),
+    );*/
     message.mention_roles = (
         await Promise.all(
             mention_role_ids.map((x) => {
@@ -451,12 +454,12 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
         const users = new Set<string>([
             ...(message.mention_roles.length
                 ? await Member.find({
-                      where: [
-                          ...message.mention_roles.map((role) => {
-                              return { roles: { id: role.id } };
-                          }),
-                      ],
-                  })
+                    where: [
+                        ...message.mention_roles.map((role) => {
+                            return { roles: { id: role.id } };
+                        }),
+                    ],
+                })
                 : []
             ).map((member) => member.id),
             ...message.mentions.map((user) => user.id),
