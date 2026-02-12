@@ -408,7 +408,7 @@ router.post(
         if (body.nonce) {
             const existing = await Message.findOne({
                 where: {
-                    nonce: body.nonce,
+                    nonce: String(body.nonce),
                     channel_id: channel.id,
                     author_id: req.user_id,
                 },

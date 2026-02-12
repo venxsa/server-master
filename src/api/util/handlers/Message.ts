@@ -92,18 +92,31 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
         [] as { attachment: MessageCreateCloudAttachment; index: number }[],
     );
 
-    const message = Message.create({
+    const message = await Message.createWithDefaults({
         ...opts,
-        poll: opts.poll,
+        // map incoming poll creation schema to Poll (ensure expiry is present)
+        poll: opts.poll
+            ? {
+                  question: opts.poll.question,
+                  answers: opts.poll.answers,
+                  expiry: new Date(Date.now() + (opts.poll.duration ?? 0) * 1000),
+                  allow_multiselect: opts.poll.allow_multiselect ?? false,
+              }
+            : undefined,
+        // ensure nonce is a string to satisfy entity typing
+        nonce: opts.nonce !== undefined && opts.nonce !== null ? String(opts.nonce) : undefined,
         sticker_items: stickers,
         guild_id: channel.guild_id,
         channel_id: opts.channel_id,
-        attachments: opts.attachments || [],
+        // attachments from the create request are not persisted Attachment entities yet
+        attachments: [],
         embeds: opts.embeds || [],
         reactions: opts.reactions || [],
         type: opts.type ?? 0,
         mentions: [],
         components: opts.components ?? undefined, // Fix Discord-Go?
+        interaction_metadata:
+            opts.interaction_metadata && opts.interaction_metadata.user_id ? (opts.interaction_metadata as unknown as Message["interaction_metadata"]) : undefined,
     });
     const ephermal = (message.flags & (1 << 6)) !== 0;
     if (!ephermal && channel.type === ChannelType.GUILD_PUBLIC_THREAD) {
@@ -454,12 +467,12 @@ export async function handleMessage(opts: MessageOptions): Promise<Message> {
         const users = new Set<string>([
             ...(message.mention_roles.length
                 ? await Member.find({
-                    where: [
-                        ...message.mention_roles.map((role) => {
-                            return { roles: { id: role.id } };
-                        }),
-                    ],
-                })
+                      where: [
+                          ...message.mention_roles.map((role) => {
+                              return { roles: { id: role.id } };
+                          }),
+                      ],
+                  })
                 : []
             ).map((member) => member.id),
             ...message.mentions.map((user) => user.id),

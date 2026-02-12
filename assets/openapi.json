@@ -5043,7 +5043,10 @@
                         "type": "string"
                     },
                     "nonce": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "integer"
+                        ]
                     },
                     "channel_id": {
                         "type": "string"
@@ -5348,7 +5351,10 @@
                         "type": "string"
                     },
                     "nonce": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "integer"
+                        ]
                     },
                     "tts": {
                         "type": "boolean"
