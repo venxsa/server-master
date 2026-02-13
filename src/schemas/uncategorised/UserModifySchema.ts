@@ -19,9 +19,3 @@ export interface UserModifySchema {
     display_name_font_id?: User_DisplayNameFont;
     [key: string]: any;
 }
-
-export interface TotpEnableSchema {
-    password: string;
-    code?: string;
-    secret?: string;
-}
