@@ -159,6 +159,11 @@ export class Message extends BaseClass {
         return this.pinned_at != null;
     }
 
+    set pinned(value: boolean) {
+        if (value) this.pinned_at = new Date();
+        else this.pinned_at = null;
+    }
+
     @Column({ type: "int" })
     type: MessageType;
 
