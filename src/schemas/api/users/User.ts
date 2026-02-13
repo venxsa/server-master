@@ -1,21 +1,3 @@
-/*
-	Spacebar: A FOSS re-implementation and extension of the Discord.com backend.
-	Copyright (C) 2025 Spacebar and Spacebar Contributors
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU Affero General Public License as published
-	by the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU Affero General Public License for more details.
-
-	You should have received a copy of the GNU Affero General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 import { ConnectedAccountSchema, Snowflake, UserSettingsSchema } from "@spacebar/schemas";
 import { BitField } from "@spacebar/util/util";
 import { Relationship, Session } from "@spacebar/util/entities";
@@ -123,6 +105,7 @@ export enum PublicUserEnum {
     bot,
     premium_since,
     premium_type,
+    premium,
     theme_colors,
     pronouns,
     badge_ids,
@@ -146,7 +129,6 @@ export enum PrivateUserEnum {
     premium_usage_flags,
     disabled,
     settings,
-    // locale
 }
 
 export type PrivateUserKeys = keyof typeof PrivateUserEnum | PublicUserKeys;
@@ -154,7 +136,6 @@ export type PrivateUserKeys = keyof typeof PrivateUserEnum | PublicUserKeys;
 export const PublicUserProjection = Object.values(PublicUserEnum).filter((x) => typeof x === "string") as PublicUserKeys[];
 export const PrivateUserProjection = [...PublicUserProjection, ...Object.values(PrivateUserEnum).filter((x) => typeof x === "string")] as PrivateUserKeys[];
 
-// Private user data that should never get sent to the client
 export type PublicUser = Pick<UserEntityPleaseRewriteThankYou, PublicUserKeys>;
 export type PrivateUser = Pick<UserEntityPleaseRewriteThankYou, PrivateUserKeys>;
 
@@ -162,7 +143,6 @@ export interface UserPrivate extends Pick<UserEntityPleaseRewriteThankYou, Priva
     locale: string;
 }
 
-// This causes a failure in openapi.js...?
 export class UserFlags extends BitField {
     static FLAGS = {
         DISCORD_EMPLOYEE: 1n << 0n,
@@ -186,11 +166,9 @@ export class UserFlags extends BitField {
         CERTIFIED_MODERATOR: 1n << 18n,
         BOT_HTTP_INTERACTIONS: 1n << 19n,
         SPAMMER: 1n << 20n,
-        // @deprecated
         DISABLE_PREMIUM: 1n << 21n,
         ACTIVE_DEVELOPER: 1n << 22n,
         PROVISIONAL_ACCOUNT: 1n << 23n,
-        // Where did 24-32 go???
         HIGH_GLOBAL_RATE_LIMIT: 1n << 33n,
         DELETED: 1n << 34n,
         DISABLED_SUSPICIOUS_ACCOUNT: 1n << 35n,
@@ -200,12 +178,9 @@ export class UserFlags extends BitField {
         USED_WEB_CLIENT: 1n << 39n,
         USED_MOBILE_CLIENT: 1n << 40n,
         DISABLED: 1n << 41n,
-        // 42 is unknown...
         HAS_SESSION_STARTED: 1n << 43n,
         QUARANTINED: 1n << 44n,
-        // 45 and 46 are unknown...
         PREMIUM_ELEGIBLE_FOR_UNIQUE_USERNAME: 1n << 47n,
-        // 48 and 49 are unknown...
         COLLABORATOR: 1n << 50n,
         RESTRICTED_COLLABORATOR: 1n << 51n,
     };

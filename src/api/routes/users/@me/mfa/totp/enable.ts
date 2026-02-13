@@ -1,21 +1,3 @@
-/*
-    Spacebar: A FOSS re-implementation and extension of the Discord.com backend.
-    Copyright (C) 2023 Spacebar and Spacebar Contributors
-	
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-	
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-	
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 import { route } from "@spacebar/api";
 import { User, generateMfaBackupCodes, generateToken, Config } from "@spacebar/util";
 import bcrypt from "bcrypt";
@@ -47,7 +29,7 @@ router.post(
 
         const user = await User.findOneOrFail({
             where: { id: req.user_id },
-            select: { data: true, email: true },
+            select: { data: true, email: true, username: true },
         });
 
         if (user.data.hash) {
@@ -71,7 +53,8 @@ router.post(
 
         if (!body.secret) throw new HTTPError(req.t("auth:login.INVALID_TOTP_SECRET"), 60005);
 
-        if (verifyToken(body.secret, body.code)?.delta != 0) throw new HTTPError(req.t("auth:login.INVALID_TOTP_CODE"), 60008);
+        const code = body.code.replace(/\s/g, "");
+        if (verifyToken(body.secret, code)?.delta != 0) throw new HTTPError(req.t("auth:login.INVALID_TOTP_CODE"), 60008);
 
         const backup_codes = generateMfaBackupCodes(req.user_id);
         await Promise.all(backup_codes.map((x) => x.save()));

@@ -1,21 +1,3 @@
-/*
-    Spacebar: A FOSS re-implementation and extension of the Discord.com backend.
-    Copyright (C) 2023 Spacebar and Spacebar Contributors
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 import { route } from "@spacebar/api";
 import { Config, emitEvent, FieldErrors, generateToken, handleFile, User, UserUpdateEvent } from "@spacebar/util";
 import bcrypt from "bcrypt";
@@ -67,7 +49,6 @@ router.patch(
             select: [...PrivateUserProjection, "data"],
         });
 
-        // Populated on password change
         let newToken: string | undefined;
 
         if (body.avatar) body.avatar = await handleFile(`/avatars/${req.user_id}`, body.avatar as string);
@@ -152,7 +133,6 @@ router.patch(
         }
 
         if (body.username && !body.discriminator) {
-            // If username changes but no discriminator provided, check if old one is available
             const exists = await User.findOne({
                 where: {
                     username: body.username,
@@ -161,7 +141,6 @@ router.patch(
                 select: { id: true },
             });
             if (exists && exists.id !== user.id) {
-                // taken, pick a new one
                 const newDiscrim = await User.generateDiscriminator(body.username);
                 if (!newDiscrim) {
                     throw FieldErrors({
@@ -242,11 +221,9 @@ router.patch(
         user.validate();
         await user.save();
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
         delete user.data;
 
-        // TODO: send update member list event in gateway
         await emitEvent({
             event: "USER_UPDATE",
             user_id: req.user_id,
